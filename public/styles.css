@@ -76,7 +76,7 @@ body {
 
 #track-info {
     position: absolute;
-    bottom: 30px;
+    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
