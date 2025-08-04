@@ -20,16 +20,29 @@ class ColorExtractor {
                     const colors = this.getPalette(pixels, numColors);
                     
                     const hexColors = colors.map(rgb => this.rgbToHex(rgb[0], rgb[1], rgb[2]));
-                    resolve(hexColors);
+                    const backgroundColors = this.createBackgroundColors(colors);
+                    
+                    resolve({
+                        particle: hexColors,
+                        background: backgroundColors
+                    });
                 } catch (error) {
                     console.error('Error extracting colors:', error);
-                    resolve(['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']);
+                    const fallback = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+                    resolve({
+                        particle: fallback,
+                        background: this.createBackgroundColors(fallback.map(hex => this.hexToRgb(hex)))
+                    });
                 }
             };
             
             img.onerror = () => {
                 console.error('Error loading image for color extraction');
-                resolve(['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']);
+                const fallback = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+                resolve({
+                    particle: fallback,
+                    background: this.createBackgroundColors(fallback.map(hex => this.hexToRgb(hex)))
+                });
             };
             
             img.src = imageUrl;
@@ -163,5 +176,42 @@ class ColorExtractor {
             const hex = x.toString(16);
             return hex.length === 1 ? '0' + hex : hex;
         }).join('');
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+        ] : [0, 0, 0];
+    }
+
+    createBackgroundColors(rgbColors) {
+        return rgbColors.slice(0, 3).map((rgb, index) => {
+            let [r, g, b] = rgb;
+            
+            // Make VERY visible for testing - use 80-90% brightness
+            const darkenFactor = 0.8 + (index * 0.05); // Very bright: 80%, 85%, 90%
+            r = Math.round(r * darkenFactor);
+            g = Math.round(g * darkenFactor);
+            b = Math.round(b * darkenFactor);
+            
+            // Less muting for testing
+            const gray = (r + g + b) / 3;
+            const muteFactor = 0.9; // Keep 90% of color, 10% becomes gray
+            r = Math.round(r * muteFactor + gray * (1 - muteFactor));
+            g = Math.round(g * muteFactor + gray * (1 - muteFactor));
+            b = Math.round(b * muteFactor + gray * (1 - muteFactor));
+            
+            // Allow full brightness for testing
+            r = Math.min(r, 255);
+            g = Math.min(g, 255);
+            b = Math.min(b, 255);
+            
+            const hex = this.rgbToHex(r, g, b);
+            console.log(`🎨 Background color ${index + 1}: RGB(${r}, ${g}, ${b}) -> ${hex}`);
+            return hex;
+        });
     }
 }

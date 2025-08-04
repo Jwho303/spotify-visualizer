@@ -7,7 +7,7 @@ class Particle {
         this.vx = (Math.random() - 0.5) * 2;
         this.vy = (Math.random() - 0.5) * 2 - 1;
         this.baseSize = settings.particleSize || 2.5;
-        this.size = Math.random() * this.baseSize * 1.5 + this.baseSize * 0.5;
+        this.size = Math.max(0.01, Math.random() * this.baseSize * 1.5 + this.baseSize * 0.5);
         this.life = 1;
         this.decay = Math.random() * settings.decayRate * 1.5 + settings.decayRate * 0.5;
         this.color = colors[Math.floor(Math.random() * colors.length)];
@@ -33,17 +33,56 @@ class Particle {
         this.vy += 0.05 * audioBoost * speedMultiplier;
         this.life -= this.decay * (1 - audioLevel * 0.5) * speedMultiplier;
         
-        this.size = Math.max(0.5, this.size + (bassLevel - 0.5) * 0.5);
+        this.size = Math.max(0.01, this.size + (bassLevel - 0.5) * 0.5);
     }
 
     draw(ctx) {
         ctx.save();
         ctx.globalAlpha = this.life * 0.8;
-        ctx.fillStyle = this.color;
         
+        // Create bokeh feathering effect with radial gradient
+        const gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size * 1.5
+        );
+        
+        // Parse hex color to RGB for gradient manipulation
+        const hex = this.color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Create feathered bokeh effect
+        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);           // Solid center
+        gradient.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, 0.8)`);       // Strong middle
+        gradient.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.3)`);       // Soft edge
+        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);           // Transparent outer
+        
+        ctx.fillStyle = gradient;
+        
+        // Draw the main bokeh circle
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Add subtle highlight for bokeh effect (scale down for very small particles)
+        if (this.size > 0.05) {
+            ctx.globalAlpha = this.life * 0.4;
+            const highlightSize = Math.max(0.1, this.size * 0.8);
+            const highlightOffset = Math.max(0.02, this.size * 0.3);
+            
+            const highlightGradient = ctx.createRadialGradient(
+                this.x - highlightOffset, this.y - highlightOffset, 0,
+                this.x - highlightOffset, this.y - highlightOffset, highlightSize
+            );
+            highlightGradient.addColorStop(0, `rgba(255, 255, 255, 0.6)`);
+            highlightGradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+            
+            ctx.fillStyle = highlightGradient;
+            ctx.beginPath();
+            ctx.arc(this.x - highlightOffset, this.y - highlightOffset, highlightSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
         
         ctx.restore();
     }
@@ -133,8 +172,12 @@ class ParticleSystem {
     }
 
     draw() {
-        this.ctx.fillStyle = `rgba(0, 0, 0, ${this.settings.trailOpacity})`;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Clear canvas with transparency instead of black overlay
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Create trail effect using globalAlpha instead of black overlay
+        this.ctx.save();
+        this.ctx.globalAlpha = 1 - this.settings.trailOpacity * 10; // Convert trail opacity to alpha
         
         if (this.settings.enableGlow) {
             this.ctx.globalCompositeOperation = 'screen';
@@ -144,6 +187,7 @@ class ParticleSystem {
             particle.draw(this.ctx);
         }
         
+        this.ctx.restore();
         this.ctx.globalCompositeOperation = 'source-over';
     }
     

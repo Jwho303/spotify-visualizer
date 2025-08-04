@@ -17,6 +17,10 @@ class SpotifyVisualizer {
         this.frameCount = 0;
         this.lastTime = performance.now();
         
+        // Background transition system
+        this.currentGradient = null;
+        this.transitionDuration = 2000; // 2 seconds
+        
         this.init();
     }
 
@@ -24,6 +28,10 @@ class SpotifyVisualizer {
         await this.checkAuthStatus();
         this.setupUI();
         this.setupParticles();
+        
+        // Set initial dark background
+        this.currentGradient = 'linear-gradient(135deg, #0a0a0a, #1a1a1a, #0f0f0f)';
+        document.body.style.background = this.currentGradient;
         
         if (this.isAuthenticated) {
             this.startTrackPolling();
@@ -121,7 +129,15 @@ class SpotifyVisualizer {
             
             element.addEventListener('input', (e) => {
                 const value = slider.float ? parseFloat(e.target.value) : parseInt(e.target.value);
-                display.textContent = value;
+                
+                // Format display for very small numbers
+                if (slider.float && value < 0.01) {
+                    display.textContent = value.toFixed(3);
+                } else if (slider.float) {
+                    display.textContent = value.toFixed(2);
+                } else {
+                    display.textContent = value;
+                }
                 
                 if (this.particleSystem) {
                     this.particleSystem.updateSettings({ [slider.prop]: value });
@@ -368,10 +384,13 @@ class SpotifyVisualizer {
             newArt.id = 'album-art';
             
             // Extract colors from new album art
-            const colors = await this.colorExtractor.extractColors(track.albumArt, 6);
-            this.particleSystem.setColors(colors);
+            const colorData = await this.colorExtractor.extractColors(track.albumArt, 6);
+            console.log('🎨 Color data extracted:', colorData);
+            this.particleSystem.setColors(colorData.particle);
             
-            document.body.style.background = `linear-gradient(135deg, ${colors[0]}22, ${colors[1]}22)`;
+            // Create smooth background transition
+            console.log('🌈 Transitioning background with colors:', colorData.background);
+            this.transitionBackground(colorData.background);
         };
     }
 
@@ -391,6 +410,37 @@ class SpotifyVisualizer {
         document.getElementById('album-art').src = '';
         document.getElementById('track-name').textContent = 'No track playing';
         document.getElementById('artist-name').textContent = '';
+    }
+    
+    transitionBackground(backgroundColors) {
+        console.log('🖼️ transitionBackground called with:', backgroundColors);
+        
+        if (!backgroundColors || backgroundColors.length < 2) {
+            console.log('❌ Not enough background colors, skipping transition');
+            return;
+        }
+        
+        // Create gradient from the background colors
+        const newGradient = `linear-gradient(135deg, ${backgroundColors[0]}, ${backgroundColors[1]}${backgroundColors[2] ? ', ' + backgroundColors[2] : ''})`;
+        console.log('🎨 New gradient created:', newGradient);
+        
+        // If this is the first gradient, set it immediately
+        if (!this.currentGradient) {
+            console.log('🆕 Setting initial gradient');
+            document.body.style.background = newGradient;
+            this.currentGradient = newGradient;
+            return;
+        }
+        
+        console.log('🔄 Starting transition from:', this.currentGradient, 'to:', newGradient);
+        
+        // Force the background with !important and multiple methods
+        document.body.style.background = newGradient;
+        document.body.style.setProperty('background', newGradient, 'important');
+        document.body.style.backgroundColor = ''; // Clear any solid background color
+        this.currentGradient = newGradient;
+        
+        console.log('🎯 Background applied with force:', newGradient);
     }
     
     async updateTrackFromPlayer(track) {
