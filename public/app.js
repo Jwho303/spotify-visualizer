@@ -80,6 +80,8 @@ class SpotifyVisualizer {
         
         this.setupDebugControls();
         this.setupMediaControls();
+        this.setupContextMenu();
+        this.setupKeyboardControls();
     }
     
     setupDebugControls() {
@@ -275,6 +277,51 @@ class SpotifyVisualizer {
                 this.showMessage('❌ Skip failed', 'error');
             }
         });
+    }
+    
+    setupContextMenu() {
+        // Disable default context menu
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            
+            // Toggle debug panel on right click
+            const debugPanel = document.getElementById('debug-panel');
+            if (debugPanel.classList.contains('hidden')) {
+                debugPanel.classList.remove('hidden');
+            } else {
+                debugPanel.classList.add('hidden');
+            }
+        });
+    }
+    
+    setupKeyboardControls() {
+        document.addEventListener('keydown', (e) => {
+            // F key for fullscreen toggle
+            if (e.key === 'f' || e.key === 'F') {
+                this.toggleFullscreen();
+            }
+            
+            // Escape key to exit fullscreen or close debug panel
+            if (e.key === 'Escape') {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    document.getElementById('debug-panel').classList.add('hidden');
+                }
+            }
+        });
+    }
+    
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            // Enter fullscreen
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            // Exit fullscreen
+            document.exitFullscreen();
+        }
     }
 
     updateAlbumArtSize() {
