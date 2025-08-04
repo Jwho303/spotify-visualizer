@@ -98,17 +98,17 @@ class ParticleSystem {
         
         // Dynamic settings
         this.settings = {
-            maxParticles: 400,
-            emissionRate: 6,
-            particleSize: 2.5,
-            decayRate: 0.005,
-            trailOpacity: 0.08,
+            maxParticles: 200,
+            emissionRate: 3,
+            particleSize: 1.5,
+            decayRate: 0.002,
+            trailOpacity: 0.02,
             shadowBlur: 0,
             enableShadows: false,
             enableGlow: true,
-            speedMultiplier: 1.0,
-            particleOpacity: 0.8,
-            blendMode: 'source-over',
+            speedMultiplier: 0.05,
+            particleOpacity: 0.4,
+            blendMode: 'screen',
             canvasBlendMode: 'normal'
         };
         
