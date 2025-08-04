@@ -10,6 +10,9 @@ class ConfigManager {
             shadowBlur: 0,
             enableShadows: false,
             enableGlow: true,
+            particleOpacity: 0.8,
+            blendMode: 'source-over',
+            canvasBlendMode: 'normal',
             showMediaControls: false
         };
         this.storageKey = 'spotify-visualizer-config';

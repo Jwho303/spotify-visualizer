@@ -120,7 +120,8 @@ class SpotifyVisualizer {
             { id: 'speed-multiplier', prop: 'speedMultiplier', display: 'speed-multiplier-value', float: true },
             { id: 'decay-rate', prop: 'decayRate', display: 'decay-rate-value', float: true },
             { id: 'trail-opacity', prop: 'trailOpacity', display: 'trail-opacity-value', float: true },
-            { id: 'shadow-blur', prop: 'shadowBlur', display: 'shadow-blur-value' }
+            { id: 'shadow-blur', prop: 'shadowBlur', display: 'shadow-blur-value' },
+            { id: 'particle-opacity', prop: 'particleOpacity', display: 'particle-opacity-value', float: true }
         ];
         
         sliders.forEach(slider => {
@@ -155,6 +156,20 @@ class SpotifyVisualizer {
         document.getElementById('enable-glow').addEventListener('change', (e) => {
             if (this.particleSystem) {
                 this.particleSystem.updateSettings({ enableGlow: e.target.checked });
+            }
+        });
+        
+        // Blend mode dropdown
+        document.getElementById('blend-mode').addEventListener('change', (e) => {
+            if (this.particleSystem) {
+                this.particleSystem.updateSettings({ blendMode: e.target.value });
+            }
+        });
+        
+        // Canvas blend mode dropdown
+        document.getElementById('canvas-blend-mode').addEventListener('change', (e) => {
+            if (this.particleSystem) {
+                this.particleSystem.updateSettings({ canvasBlendMode: e.target.value });
             }
         });
         
@@ -297,6 +312,10 @@ class SpotifyVisualizer {
         document.getElementById('shadow-blur-value').textContent = config.shadowBlur;
         document.getElementById('enable-shadows').checked = config.enableShadows;
         document.getElementById('enable-glow').checked = config.enableGlow;
+        document.getElementById('particle-opacity').value = config.particleOpacity;
+        document.getElementById('particle-opacity-value').textContent = config.particleOpacity.toFixed(2);
+        document.getElementById('blend-mode').value = config.blendMode;
+        document.getElementById('canvas-blend-mode').value = config.canvasBlendMode;
         
         // Update visual controls and apply their state
         document.getElementById('show-media-controls').checked = config.showMediaControls;
@@ -441,6 +460,8 @@ class SpotifyVisualizer {
         this.currentGradient = newGradient;
         
         console.log('🎯 Background applied with force:', newGradient);
+        console.log('🔍 Body background after setting:', document.body.style.background);
+        console.log('🔍 Canvas mix-blend-mode:', document.getElementById('particle-canvas').style.mixBlendMode);
     }
     
     async updateTrackFromPlayer(track) {
@@ -571,6 +592,9 @@ class SpotifyVisualizer {
             shadowBlur: parseInt(document.getElementById('shadow-blur').value),
             enableShadows: document.getElementById('enable-shadows').checked,
             enableGlow: document.getElementById('enable-glow').checked,
+            particleOpacity: parseFloat(document.getElementById('particle-opacity').value),
+            blendMode: document.getElementById('blend-mode').value,
+            canvasBlendMode: document.getElementById('canvas-blend-mode').value,
             showMediaControls: document.getElementById('show-media-controls').checked
         };
     }

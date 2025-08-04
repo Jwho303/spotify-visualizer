@@ -36,9 +36,9 @@ class Particle {
         this.size = Math.max(0.01, this.size + (bassLevel - 0.5) * 0.5);
     }
 
-    draw(ctx) {
+    draw(ctx, particleOpacity = 0.8) {
         ctx.save();
-        ctx.globalAlpha = this.life * 0.8;
+        ctx.globalAlpha = this.life * particleOpacity;
         
         // Create bokeh feathering effect with radial gradient
         const gradient = ctx.createRadialGradient(
@@ -67,7 +67,7 @@ class Particle {
         
         // Add subtle highlight for bokeh effect (scale down for very small particles)
         if (this.size > 0.05) {
-            ctx.globalAlpha = this.life * 0.4;
+            ctx.globalAlpha = this.life * particleOpacity * 0.5;
             const highlightSize = Math.max(0.1, this.size * 0.8);
             const highlightOffset = Math.max(0.02, this.size * 0.3);
             
@@ -106,11 +106,18 @@ class ParticleSystem {
             shadowBlur: 0,
             enableShadows: false,
             enableGlow: true,
-            speedMultiplier: 1.0
+            speedMultiplier: 1.0,
+            particleOpacity: 0.8,
+            blendMode: 'source-over',
+            canvasBlendMode: 'normal'
         };
         
         this.resize();
         window.addEventListener('resize', () => this.resize());
+        
+        // Set initial canvas blend mode (default to normal to ensure background shows)
+        this.canvas.style.mixBlendMode = this.settings.canvasBlendMode || 'normal';
+        console.log('🎨 Canvas blend mode set to:', this.canvas.style.mixBlendMode);
     }
 
     resize() {
@@ -175,16 +182,17 @@ class ParticleSystem {
         // Clear canvas with transparency instead of black overlay
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Create trail effect using globalAlpha instead of black overlay
+        // Apply blend mode for particles
         this.ctx.save();
-        this.ctx.globalAlpha = 1 - this.settings.trailOpacity * 10; // Convert trail opacity to alpha
+        this.ctx.globalCompositeOperation = this.settings.blendMode;
         
-        if (this.settings.enableGlow) {
+        // Legacy glow mode override (for backwards compatibility)
+        if (this.settings.enableGlow && this.settings.blendMode === 'source-over') {
             this.ctx.globalCompositeOperation = 'screen';
         }
         
         for (const particle of this.particles) {
-            particle.draw(this.ctx);
+            particle.draw(this.ctx, this.settings.particleOpacity);
         }
         
         this.ctx.restore();
@@ -193,6 +201,17 @@ class ParticleSystem {
     
     updateSettings(newSettings) {
         Object.assign(this.settings, newSettings);
+        
+        // Update canvas CSS blend mode if it changed
+        if (newSettings.canvasBlendMode !== undefined) {
+            this.canvas.style.mixBlendMode = newSettings.canvasBlendMode;
+            console.log('🎨 Canvas blend mode updated to:', newSettings.canvasBlendMode);
+            
+            // Temporarily disable blend mode if it's causing issues
+            if (newSettings.canvasBlendMode !== 'normal') {
+                console.log('⚠️ Non-normal blend mode set, this might affect background visibility');
+            }
+        }
     }
     
     getParticleCount() {
