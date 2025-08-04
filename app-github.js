@@ -24,9 +24,21 @@ class SpotifyVisualizer {
     }
 
     async init() {
-        // Check for token in URL first
-        if (this.spotifyAuth.parseTokenFromUrl()) {
-            console.log('✅ Token found in URL');
+        console.log('🚀 Initializing Spotify Visualizer...');
+        
+        // Load any stored tokens
+        this.spotifyAuth.loadStoredTokens();
+        
+        // Check if we're returning from Spotify auth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('code')) {
+            console.log('🔄 Handling Spotify callback...');
+            const success = await this.spotifyAuth.handleCallback();
+            if (success) {
+                console.log('✅ Authorization successful');
+            } else {
+                console.log('❌ Authorization failed');
+            }
         }
         
         await this.checkAuthStatus();
@@ -38,18 +50,24 @@ class SpotifyVisualizer {
         document.body.style.background = this.currentGradient;
         
         if (this.spotifyAuth.isAuthenticated()) {
+            console.log('🎵 User authenticated, starting visualizer...');
             this.startTrackPolling();
             this.startAnimation();
+        } else {
+            console.log('🔒 User not authenticated');
         }
     }
 
     async checkAuthStatus() {
         const isAuthenticated = this.spotifyAuth.isAuthenticated();
+        console.log('🔐 Auth status:', isAuthenticated);
         
         if (!isAuthenticated) {
+            console.log('👤 Showing login screen');
             document.getElementById('login-container').classList.remove('hidden');
             document.getElementById('visualizer-container').style.display = 'none';
         } else {
+            console.log('🎨 Showing visualizer');
             document.getElementById('login-container').classList.add('hidden');
             document.getElementById('visualizer-container').style.display = 'block';
         }

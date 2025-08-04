@@ -37,6 +37,10 @@ class SpotifyAuth {
 
     // Parse access token from URL hash
     parseTokenFromUrl() {
+        console.log('🔍 Checking URL for token...');
+        console.log('Current URL:', window.location.href);
+        console.log('URL Hash:', window.location.hash);
+        
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         
@@ -44,15 +48,24 @@ class SpotifyAuth {
         const expiresIn = params.get('expires_in');
         const state = params.get('state');
 
+        console.log('📋 Parsed params:', {
+            accessToken: accessToken ? 'Found' : 'Not found',
+            expiresIn,
+            state
+        });
+
         if (accessToken) {
             this.accessToken = accessToken;
             this.tokenExpiry = Date.now() + (parseInt(expiresIn) * 1000);
+            
+            console.log('✅ Token saved successfully');
             
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
             
             return true;
         }
+        console.log('❌ No token found in URL');
         return false;
     }
 
