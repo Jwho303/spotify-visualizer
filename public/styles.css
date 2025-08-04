@@ -1,0 +1,344 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #000;
+    color: white;
+    overflow: hidden;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+#login-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1000;
+}
+
+#login-btn, #enable-audio {
+    background: #1db954;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#login-btn:hover, #enable-audio:hover {
+    background: #1ed760;
+    transform: scale(1.05);
+}
+
+#visualizer-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#album-art-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#album-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#track-info {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 30px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+#track-name {
+    font-size: 24px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+#artist-name {
+    font-size: 18px;
+    opacity: 0.8;
+}
+
+#audio-permission {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 350px;
+}
+
+.audio-instructions {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.audio-instructions ol {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.audio-instructions li {
+    margin-bottom: 5px;
+}
+
+.audio-instructions .note {
+    margin-top: 10px;
+    font-size: 11px;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+.secondary-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    font-size: 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.hidden {
+    display: none !important;
+}
+
+#debug-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+#debug-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+#debug-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    width: 350px;
+    max-height: 80vh;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    z-index: 1002;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.debug-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.debug-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+#toggle-debug {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.debug-content {
+    padding: 15px;
+    overflow-y: auto;
+    max-height: calc(80vh - 60px);
+}
+
+.fps-counter, .particle-count {
+    font-size: 16px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+}
+
+.fps-counter span, .particle-count span {
+    font-weight: bold;
+    color: #1db954;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.control-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#reset-settings {
+    width: 100%;
+    padding: 10px;
+    background: #1db954;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+#reset-settings:hover, #save-config:hover, #export-config:hover, #import-config-btn:hover {
+    background: #1ed760;
+}
+
+#save-config, #export-config, #import-config-btn {
+    width: 48%;
+    padding: 8px;
+    background: #1db954;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 2px;
+    transition: background 0.3s ease;
+}
+
+.audio-debug {
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.audio-debug h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #1db954;
+}
+
+.level-bar {
+    margin-bottom: 8px;
+}
+
+.level-bar label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.1s ease;
+    border-radius: 4px;
+}
+
+#volume-bar { background: #1db954; }
+#bass-bar { background: #ff6b6b; }
+#mid-bar { background: #4ecdc4; }
+#treble-bar { background: #45b7d1; }
+
+.audio-status {
+    margin-top: 10px;
+    font-size: 11px;
+    opacity: 0.7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#retry-audio {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    transition: background 0.3s ease;
+}
+
+#retry-audio:hover {
+    background: #ff5252;
+}

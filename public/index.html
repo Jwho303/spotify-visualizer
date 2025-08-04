@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="login-container" class="hidden">
+        <button id="login-btn">Login with Spotify</button>
+    </div>
+    
+    <div id="visualizer-container">
+        <canvas id="particle-canvas"></canvas>
+        <div id="album-art-container">
+            <img id="album-art" src="" alt="Album Art">
+        </div>
+        <div id="track-info">
+            <h2 id="track-name"></h2>
+            <p id="artist-name"></p>
+        </div>
+    </div>
+
+    <div id="audio-permission" class="hidden">
+        <button id="enable-audio">🖥️ Enable Screen Audio Capture</button>
+        <div class="audio-instructions">
+            <p><strong>Best way to visualize Spotify with headphones:</strong></p>
+            <ol>
+                <li><strong>Open Spotify in a browser tab</strong> (open.spotify.com)</li>
+                <li>Click the button above</li>
+                <li><strong>Select "Chrome Tab"</strong> in the share dialog</li>
+                <li><strong>Check "Share tab audio"</strong> ✅</li>
+                <li>Select your Spotify tab and click Share</li>
+                <li>Play music - particles will react to real audio! 🎵</li>
+            </ol>
+            <p class="note">💡 This captures audio directly from your Spotify browser tab - works perfectly with headphones!</p>
+            <button id="use-microphone" class="secondary-btn">🎤 Use Microphone Instead</button>
+        </div>
+    </div>
+
+    <div id="debug-panel" class="hidden">
+        <div class="debug-header">
+            <h3>Debug Controls</h3>
+            <button id="toggle-debug">×</button>
+        </div>
+        <div class="debug-content">
+            <div class="fps-counter">FPS: <span id="fps">0</span></div>
+            <div class="particle-count">Particles: <span id="particle-count">0</span></div>
+            
+            <div class="audio-debug">
+                <h4>Audio Debug</h4>
+                <div class="audio-levels">
+                    <div class="level-bar">
+                        <label>Volume: <span id="volume-level">0%</span></label>
+                        <div class="progress-bar"><div id="volume-bar" class="progress-fill"></div></div>
+                    </div>
+                    <div class="level-bar">
+                        <label>Bass: <span id="bass-level">0%</span></label>
+                        <div class="progress-bar"><div id="bass-bar" class="progress-fill"></div></div>
+                    </div>
+                    <div class="level-bar">
+                        <label>Mid: <span id="mid-level">0%</span></label>
+                        <div class="progress-bar"><div id="mid-bar" class="progress-fill"></div></div>
+                    </div>
+                    <div class="level-bar">
+                        <label>Treble: <span id="treble-level">0%</span></label>
+                        <div class="progress-bar"><div id="treble-bar" class="progress-fill"></div></div>
+                    </div>
+                </div>
+                <div class="audio-status">
+                    <span id="audio-source">Source: None</span>
+                    <button id="retry-audio" title="Retry Audio Capture">🔄 Retry Audio</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Max Particles: <span id="max-particles-value">400</span></label>
+                <input type="range" id="max-particles" min="50" max="2000" value="400" step="50">
+            </div>
+            
+            <div class="control-group">
+                <label>Emission Rate: <span id="emission-rate-value">6</span></label>
+                <input type="range" id="emission-rate" min="1" max="20" value="6" step="1">
+            </div>
+            
+            <div class="control-group">
+                <label>Particle Size: <span id="particle-size-value">2.5</span></label>
+                <input type="range" id="particle-size" min="0.5" max="10" value="2.5" step="0.5">
+            </div>
+            
+            <div class="control-group">
+                <label>Decay Rate: <span id="decay-rate-value">0.005</span></label>
+                <input type="range" id="decay-rate" min="0.001" max="0.02" value="0.005" step="0.001">
+            </div>
+            
+            <div class="control-group">
+                <label>Trail Opacity: <span id="trail-opacity-value">0.08</span></label>
+                <input type="range" id="trail-opacity" min="0.01" max="0.3" value="0.08" step="0.01">
+            </div>
+            
+            <div class="control-group">
+                <label>Shadow Blur: <span id="shadow-blur-value">0</span></label>
+                <input type="range" id="shadow-blur" min="0" max="50" value="0" step="5">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="enable-shadows"> Enable Shadows
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="enable-glow" checked> Enable Glow Effect
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <button id="save-config">💾 Save Config</button>
+                <button id="reset-settings">🔄 Reset to Defaults</button>
+            </div>
+            
+            <div class="control-group">
+                <button id="export-config">📤 Export Config</button>
+                <input type="file" id="import-config" accept=".json" style="display: none;">
+                <button id="import-config-btn">📥 Import Config</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="debug-toggle-btn" title="Debug Panel">⚙️</button>
+
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        // Required callback for Spotify Web Playback SDK
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            console.log('Spotify Web Playback SDK Ready');
+            // Initialize the app after SDK is loaded
+            window.spotifySDKReady = true;
+            if (window.SpotifyVisualizer && !window.visualizer) {
+                window.visualizer = new SpotifyVisualizer();
+            }
+        };
+    </script>
+    <script src="configManager.js"></script>
+    <script src="colorThief.js"></script>
+    <script src="particles.js"></script>
+    <script src="audioAnalyzer.js"></script>
+    <script src="spotifyPlayer.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
