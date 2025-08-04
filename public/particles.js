@@ -16,22 +16,22 @@ class Particle {
         this.radius = Math.random() * 50;
     }
 
-    update(audioLevel, bassLevel, trebleLevel) {
+    update(audioLevel, bassLevel, trebleLevel, speedMultiplier = 1.0) {
         const audioBoost = 1 + audioLevel * 3;
         const bassBoost = 1 + bassLevel * 5;
         const trebleWave = Math.sin(Date.now() * 0.001 + this.angle) * trebleLevel;
         
-        this.angle += this.angleSpeed * audioBoost;
-        this.radius += (bassLevel * 2 - 0.5) * bassBoost;
+        this.angle += this.angleSpeed * audioBoost * speedMultiplier;
+        this.radius += (bassLevel * 2 - 0.5) * bassBoost * speedMultiplier;
         
         const targetX = this.originX + Math.cos(this.angle) * this.radius * audioBoost;
         const targetY = this.originY + Math.sin(this.angle) * this.radius * audioBoost + this.vy * bassBoost;
         
-        this.x += (targetX - this.x) * 0.1 + trebleWave;
-        this.y += (targetY - this.y) * 0.1 - Math.abs(trebleWave);
+        this.x += (targetX - this.x) * 0.1 * speedMultiplier + trebleWave * speedMultiplier;
+        this.y += (targetY - this.y) * 0.1 * speedMultiplier - Math.abs(trebleWave * speedMultiplier);
         
-        this.vy += 0.05 * audioBoost;
-        this.life -= this.decay * (1 - audioLevel * 0.5);
+        this.vy += 0.05 * audioBoost * speedMultiplier;
+        this.life -= this.decay * (1 - audioLevel * 0.5) * speedMultiplier;
         
         this.size = Math.max(0.5, this.size + (bassLevel - 0.5) * 0.5);
     }
@@ -66,7 +66,8 @@ class ParticleSystem {
             trailOpacity: 0.08,
             shadowBlur: 0,
             enableShadows: false,
-            enableGlow: true
+            enableGlow: true,
+            speedMultiplier: 1.0
         };
         
         this.resize();
@@ -121,7 +122,7 @@ class ParticleSystem {
         
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
-            particle.update(audioLevel, bassLevel, trebleLevel);
+            particle.update(audioLevel, bassLevel, trebleLevel, this.settings.speedMultiplier);
             
             if (particle.life <= 0 || 
                 particle.x < -50 || particle.x > this.canvas.width + 50 ||

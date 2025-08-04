@@ -126,6 +126,7 @@ app.get('/current-track', async (req, res) => {
     }
 
     const track = response.data.item;
+    
     res.json({
       playing: response.data.is_playing,
       track: {
@@ -151,6 +152,83 @@ app.get('/auth-status', (req, res) => {
     authenticated: !!req.session.access_token,
     access_token: req.session.access_token 
   });
+});
+
+// Media control endpoints
+app.post('/play', async (req, res) => {
+  const access_token = req.session.access_token;
+  if (!access_token) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    await axios.put('https://api.spotify.com/v1/me/player/play', {}, {
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error playing:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to play' });
+  }
+});
+
+app.post('/pause', async (req, res) => {
+  const access_token = req.session.access_token;
+  if (!access_token) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    await axios.put('https://api.spotify.com/v1/me/player/pause', {}, {
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error pausing:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to pause' });
+  }
+});
+
+app.post('/next', async (req, res) => {
+  const access_token = req.session.access_token;
+  if (!access_token) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    await axios.post('https://api.spotify.com/v1/me/player/next', {}, {
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error skipping to next:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to skip to next' });
+  }
+});
+
+app.post('/previous', async (req, res) => {
+  const access_token = req.session.access_token;
+  if (!access_token) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  try {
+    await axios.post('https://api.spotify.com/v1/me/player/previous', {}, {
+      headers: {
+        'Authorization': 'Bearer ' + access_token
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error skipping to previous:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to skip to previous' });
+  }
 });
 
 // HTTP server (redirects to HTTPS)

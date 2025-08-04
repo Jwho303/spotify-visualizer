@@ -4,11 +4,13 @@ class ConfigManager {
             maxParticles: 400,
             emissionRate: 6,
             particleSize: 2.5,
+            speedMultiplier: 1.0,
             decayRate: 0.005,
             trailOpacity: 0.08,
             shadowBlur: 0,
             enableShadows: false,
-            enableGlow: true
+            enableGlow: true,
+            showMediaControls: false
         };
         this.storageKey = 'spotify-visualizer-config';
     }

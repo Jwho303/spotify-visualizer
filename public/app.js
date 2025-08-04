@@ -71,6 +71,7 @@ class SpotifyVisualizer {
         }
         
         this.setupDebugControls();
+        this.setupMediaControls();
     }
     
     setupDebugControls() {
@@ -86,11 +87,29 @@ class SpotifyVisualizer {
             debugPanel.classList.add('hidden');
         });
         
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${targetTab}-tab`).classList.add('active');
+            });
+        });
+        
         // Slider controls
         const sliders = [
             { id: 'max-particles', prop: 'maxParticles', display: 'max-particles-value' },
             { id: 'emission-rate', prop: 'emissionRate', display: 'emission-rate-value' },
             { id: 'particle-size', prop: 'particleSize', display: 'particle-size-value', float: true },
+            { id: 'speed-multiplier', prop: 'speedMultiplier', display: 'speed-multiplier-value', float: true },
             { id: 'decay-rate', prop: 'decayRate', display: 'decay-rate-value', float: true },
             { id: 'trail-opacity', prop: 'trailOpacity', display: 'trail-opacity-value', float: true },
             { id: 'shadow-blur', prop: 'shadowBlur', display: 'shadow-blur-value' }
@@ -121,6 +140,20 @@ class SpotifyVisualizer {
             if (this.particleSystem) {
                 this.particleSystem.updateSettings({ enableGlow: e.target.checked });
             }
+        });
+        
+        // Visual controls
+        document.getElementById('show-media-controls').addEventListener('change', (e) => {
+            const controls = document.getElementById('media-controls');
+            if (e.target.checked) {
+                controls.classList.remove('hidden');
+            } else {
+                controls.classList.add('hidden');
+            }
+            // Save to config
+            const config = this.getCurrentConfig();
+            config.showMediaControls = e.target.checked;
+            this.configManager.saveConfig(config);
         });
         
         // Config management buttons
@@ -172,6 +205,46 @@ class SpotifyVisualizer {
             }
         });
     }
+    
+    setupMediaControls() {
+        document.getElementById('play-pause-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/current-track');
+                const data = await response.json();
+                
+                if (data.playing) {
+                    await fetch('/pause', { method: 'POST' });
+                    document.getElementById('play-pause-btn').textContent = '▶️';
+                } else {
+                    await fetch('/play', { method: 'POST' });
+                    document.getElementById('play-pause-btn').textContent = '⏸️';
+                }
+            } catch (error) {
+                console.error('Error toggling playback:', error);
+                this.showMessage('❌ Playback control failed', 'error');
+            }
+        });
+        
+        document.getElementById('next-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/next', { method: 'POST' });
+                this.showMessage('⏭️ Next track', 'success');
+            } catch (error) {
+                console.error('Error skipping to next:', error);
+                this.showMessage('❌ Skip failed', 'error');
+            }
+        });
+        
+        document.getElementById('prev-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/previous', { method: 'POST' });
+                this.showMessage('⏮️ Previous track', 'success');
+            } catch (error) {
+                console.error('Error skipping to previous:', error);
+                this.showMessage('❌ Skip failed', 'error');
+            }
+        });
+    }
 
     updateAlbumArtSize() {
         const minDimension = Math.min(window.innerWidth, window.innerHeight);
@@ -198,6 +271,8 @@ class SpotifyVisualizer {
         document.getElementById('emission-rate-value').textContent = config.emissionRate;
         document.getElementById('particle-size').value = config.particleSize;
         document.getElementById('particle-size-value').textContent = config.particleSize;
+        document.getElementById('speed-multiplier').value = config.speedMultiplier;
+        document.getElementById('speed-multiplier-value').textContent = config.speedMultiplier;
         document.getElementById('decay-rate').value = config.decayRate;
         document.getElementById('decay-rate-value').textContent = config.decayRate;
         document.getElementById('trail-opacity').value = config.trailOpacity;
@@ -206,6 +281,17 @@ class SpotifyVisualizer {
         document.getElementById('shadow-blur-value').textContent = config.shadowBlur;
         document.getElementById('enable-shadows').checked = config.enableShadows;
         document.getElementById('enable-glow').checked = config.enableGlow;
+        
+        // Update visual controls and apply their state
+        document.getElementById('show-media-controls').checked = config.showMediaControls;
+        
+        const controls = document.getElementById('media-controls');
+        
+        if (config.showMediaControls) {
+            controls.classList.remove('hidden');
+        } else {
+            controls.classList.add('hidden');
+        }
     }
 
     async startTrackPolling() {
@@ -292,6 +378,12 @@ class SpotifyVisualizer {
     updateTrackInfo(track) {
         document.getElementById('track-name').textContent = track.name;
         document.getElementById('artist-name').textContent = track.artist;
+        
+        // Update play/pause button state
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        if (playPauseBtn) {
+            playPauseBtn.textContent = '⏸️'; // Assume playing when we get track info
+        }
     }
 
     clearTrack() {
@@ -423,11 +515,13 @@ class SpotifyVisualizer {
             maxParticles: parseInt(document.getElementById('max-particles').value),
             emissionRate: parseInt(document.getElementById('emission-rate').value),
             particleSize: parseFloat(document.getElementById('particle-size').value),
+            speedMultiplier: parseFloat(document.getElementById('speed-multiplier').value),
             decayRate: parseFloat(document.getElementById('decay-rate').value),
             trailOpacity: parseFloat(document.getElementById('trail-opacity').value),
             shadowBlur: parseInt(document.getElementById('shadow-blur').value),
             enableShadows: document.getElementById('enable-shadows').checked,
-            enableGlow: document.getElementById('enable-glow').checked
+            enableGlow: document.getElementById('enable-glow').checked,
+            showMediaControls: document.getElementById('show-media-controls').checked
         };
     }
     
