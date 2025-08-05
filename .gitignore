@@ -4,3 +4,12 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# SSL certificates - NEVER commit these!
+ssl/
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
