@@ -8,7 +8,7 @@ class AudioAnalyzer {
         this.stream = null;
     }
 
-    async initialize() {
+    async initialize(preferScreenCapture = true) {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.analyser = this.audioContext.createAnalyser();
@@ -18,82 +18,82 @@ class AudioAnalyzer {
             const bufferLength = this.analyser.frequencyBinCount;
             this.dataArray = new Uint8Array(bufferLength);
 
-            console.log('Requesting system audio capture...');
-            console.log('Note: You must select "Entire Screen" for system audio on most browsers');
-            
-            // Request display media with audio only focus
-            this.stream = await navigator.mediaDevices.getDisplayMedia({ 
-                audio: {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                    autoGainControl: false,
-                    sampleRate: 48000,
-                    channelCount: 2,
-                    sampleSize: 16,
-                    // Request system audio
-                    systemAudio: 'include',
-                    suppressLocalAudioPlayback: false
-                },
-                video: {
-                    width: 1,
-                    height: 1
-                },
-                // System audio preferences
-                systemAudio: 'include',
-                selfBrowserSurface: 'exclude',
-                surfaceSwitching: 'exclude',
-                preferCurrentTab: false
-            });
-            
-            // Immediately stop video track to reduce overhead
-            const videoTracks = this.stream.getVideoTracks();
-            videoTracks.forEach(track => {
-                track.stop();
-                this.stream.removeTrack(track);
-            });
-            
-            // Check if audio track is available
-            const audioTracks = this.stream.getAudioTracks();
-            if (audioTracks.length === 0) {
-                throw new Error('No audio track available. Make sure to share audio when selecting screen.');
-            }
-            
-            // Get audio track info
-            const audioTrack = audioTracks[0];
-            const trackSettings = audioTrack.getSettings();
-            const trackLabel = audioTrack.label.toLowerCase();
-            
-            // Create audio source
-            this.source = this.audioContext.createMediaStreamSource(this.stream);
-            this.source.connect(this.analyser);
-            
-            this.isInitialized = true;
-            
-            // Log capture type
-            if (trackLabel.includes('system') || trackLabel.includes('desktop')) {
-                this.captureType = 'system';
-                console.log('✅ System audio capture successful!');
+            if (preferScreenCapture) {
+                // Try screen/tab audio capture first
+                try {
+                    console.log('Requesting screen audio capture...');
+                    this.stream = await navigator.mediaDevices.getDisplayMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            sampleRate: 48000
+                        },
+                        video: {
+                            width: 1,
+                            height: 1
+                        }
+                    });
+                    
+                    // Check if audio track is available
+                    const audioTracks = this.stream.getAudioTracks();
+                    if (audioTracks.length === 0) {
+                        throw new Error('No audio track in screen capture');
+                    }
+                    
+                    this.source = this.audioContext.createMediaStreamSource(this.stream);
+                    this.source.connect(this.analyser);
+                    
+                    this.isInitialized = true;
+                    this.captureType = 'screen';
+                    console.log('✅ Screen audio capture successful!');
+                    return true;
+                } catch (displayError) {
+                    console.log('Screen capture failed:', displayError.message);
+                    
+                    // Fallback to microphone
+                    try {
+                        console.log('Falling back to microphone...');
+                        this.stream = await navigator.mediaDevices.getUserMedia({ 
+                            audio: {
+                                echoCancellation: false,
+                                noiseSuppression: false,
+                                autoGainControl: false
+                            } 
+                        });
+                        
+                        this.source = this.audioContext.createMediaStreamSource(this.stream);
+                        this.source.connect(this.analyser);
+                        
+                        this.isInitialized = true;
+                        this.captureType = 'microphone';
+                        console.log('🎤 Using microphone as fallback');
+                        return true;
+                    } catch (micError) {
+                        console.error('Microphone fallback failed:', micError);
+                        return false;
+                    }
+                }
             } else {
-                this.captureType = 'limited';
-                console.log('⚠️ Audio capture active but may be limited to tab/window audio');
-                console.log('For full system audio, select "Entire Screen" when sharing');
+                // Direct microphone request
+                this.stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    } 
+                });
+                
+                this.source = this.audioContext.createMediaStreamSource(this.stream);
+                this.source.connect(this.analyser);
+                
+                this.isInitialized = true;
+                this.captureType = 'microphone';
+                console.log('🎤 Using microphone');
+                return true;
             }
-            
-            console.log('Audio track:', {
-                label: audioTrack.label,
-                settings: trackSettings
-            });
-            
-            return true;
         } catch (error) {
-            console.error('Failed to capture system audio:', error.message);
-            
-            if (error.name === 'NotAllowedError') {
-                console.error('Permission denied. User must allow screen sharing with audio.');
-            } else if (error.name === 'NotFoundError') {
-                console.error('No audio sources found.');
-            }
-            
+            console.error('Error initializing audio:', error);
             return false;
         }
     }
