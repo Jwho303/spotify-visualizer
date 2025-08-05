@@ -67,9 +67,6 @@ class SpotifyVisualizer {
             await this.initializeAudio(true); // true = prefer screen capture
         });
         
-        document.getElementById('use-microphone').addEventListener('click', async () => {
-            await this.initializeAudio(false); // false = use microphone
-        });
 
         this.updateAlbumArtSize();
         window.addEventListener('resize', () => this.updateAlbumArtSize());
@@ -529,7 +526,7 @@ class SpotifyVisualizer {
     
     async initializeAudio(preferScreenCapture = true) {
         try {
-            const success = await this.audioAnalyzer.initialize(preferScreenCapture);
+            const success = await this.audioAnalyzer.initialize();
             if (success) {
                 this.audioEnabled = true;
                 document.getElementById('audio-permission').classList.add('hidden');
@@ -712,7 +709,7 @@ class SpotifyVisualizer {
             this.audioAnalyzer.destroy();
             
             // Retry with screen capture preference
-            this.audioAnalyzer.initialize(true).then(success => {
+            this.audioAnalyzer.initialize().then(success => {
                 if (success) {
                     const captureType = this.audioAnalyzer.captureType;
                     if (captureType === 'screen') {
